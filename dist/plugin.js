@@ -1861,7 +1861,7 @@ var capacitorPlugin = (function (exports, core) {
 
     class DataCaptureVersion {
         static get pluginVersion() {
-            return '6.8.0';
+            return '6.8.1';
         }
     }
 
