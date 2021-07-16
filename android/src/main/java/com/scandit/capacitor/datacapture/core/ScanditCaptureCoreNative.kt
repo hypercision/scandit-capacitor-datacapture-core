@@ -2,6 +2,7 @@ package com.scandit.capacitor.datacapture.core
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Log
 import com.getcapacitor.JSObject
 import com.getcapacitor.NativePlugin
 import com.getcapacitor.Plugin
@@ -88,6 +89,10 @@ class ScanditCaptureCoreNative : Plugin(),
         private const val ACTION_STATUS_CHANGED = "didChangeStatus"
         private const val ACTION_CONTEXT_OBSERVATION_STARTED = "didStartObservingContext"
         private const val ACTION_VIEW_SIZE_CHANGED = "didChangeSizeOrientation"
+
+        private val SCANDIT_PLUGINS = listOf(
+                "ScanditBarcodeNative"
+        )
     }
 
     private val uiWorker = UiWorker()
@@ -134,6 +139,23 @@ class ScanditCaptureCoreNative : Plugin(),
 
     override fun load() {
         super.load()
+
+        val registeredPlugins = plugins.map {
+            it.pluginHandle.id
+        }
+
+        SCANDIT_PLUGINS.forEach {
+            if (!registeredPlugins.contains(it)) {
+                val unregisteredPlugin = bridge.getPlugin(it)
+
+                if (unregisteredPlugin != null) {
+                    registerPluginInstance(unregisteredPlugin.instance)
+                } else {
+                    Log.e("Registering:", "$it not found")
+                }
+            }
+        }
+
         captureViewHandler.attachWebView(bridge.webView, bridge.activity)
         checkOrRequestCameraPermission()
     }
@@ -251,7 +273,7 @@ class ScanditCaptureCoreNative : Plugin(),
     @PluginMethod
     override fun getCurrentCameraState(call: PluginCall) {
         captureContextHandler.camera?.let {
-            call.success(JSObject(it.currentState.toJson()))
+            call.resolve(JSObject(it.currentState.toJson()))
         } ?: kotlin.run {
             call.reject(NoCameraAvailableError().serializeContent().toString())
         }
@@ -260,8 +282,10 @@ class ScanditCaptureCoreNative : Plugin(),
     @PluginMethod
     override fun getIsTorchAvailable(call: PluginCall) {
         captureContextHandler.camera?.let {
+            val positionJson = call.data.getString("position") ?: return
+
             val cameraPosition = try {
-                CameraPositionDeserializer.fromJson(call.data.getString("position"))
+                CameraPositionDeserializer.fromJson(positionJson)
             } catch (e: Exception) {
                 call.reject(
                     CameraPositionDeserializationError("GetIsTorchAvailable")
@@ -290,6 +314,7 @@ class ScanditCaptureCoreNative : Plugin(),
     override fun contextFromJSON(call: PluginCall) {
         try {
             val jsonString = call.data.getString("context")
+                    ?: return call.reject("Empty strings are not allowed.")
             val deserializationResult = deserializers.dataCaptureContextDeserializer
                 .contextFromJson(jsonString)
             val view = deserializationResult.view
@@ -299,7 +324,7 @@ class ScanditCaptureCoreNative : Plugin(),
             captureContextHandler.attachDataCaptureContext(dataCaptureContext)
             captureViewHandler.attachDataCaptureView(view!!, bridge.activity)
             captureComponentsHandler.attachDataCaptureComponents(dataCaptureComponents)
-            call.success()
+            call.resolve()
         } catch (e: JSONException) {
             e.printStackTrace()
             call.reject(JsonParseError(e.message).toString())
@@ -317,7 +342,7 @@ class ScanditCaptureCoreNative : Plugin(),
         captureContextHandler.disposeCurrent()
         captureComponentsHandler.disposeCurrent()
         captureViewHandler.disposeCurrent()
-        call.success()
+        call.resolve()
     }
 
     @PluginMethod
@@ -333,9 +358,10 @@ class ScanditCaptureCoreNative : Plugin(),
                 captureComponentsHandler.attachDataCaptureComponents(
                     captureComponentsHandler.dataCaptureComponents
                 )
-                call.success()
+                call.resolve()
             } else {
                 val jsonString = call.data.getString("context")
+                        ?: return call.reject("Empty strings are not allowed.")
                 uiWorker.post {
                     val deserializationResult =
                         deserializers.dataCaptureContextDeserializer.updateContextFromJson(
@@ -352,7 +378,7 @@ class ScanditCaptureCoreNative : Plugin(),
                     captureViewHandler.attachDataCaptureView(view!!, bridge.activity)
                     captureComponentsHandler.attachDataCaptureComponents(dataCaptureComponents)
 
-                    call.success()
+                    call.resolve()
                 }
             }
         } catch (e: JSONException) {
@@ -373,9 +399,11 @@ class ScanditCaptureCoreNative : Plugin(),
     @PluginMethod
     override fun setViewPositionAndSize(call: PluginCall) {
         try {
-            val info = JSONObject(call.data.getString("position"))
+            val positionJson = call.data.getString("position")
+                    ?: return call.reject("Empty strings are not allowed.")
+            val info = JSONObject(positionJson)
             captureViewHandler.setResizeAndMoveInfo(ResizeAndMoveInfo(info))
-            call.success()
+            call.resolve()
         } catch (e: JSONException) {
             e.printStackTrace()
             call.reject(JsonParseError(e.message).toString())
@@ -385,13 +413,13 @@ class ScanditCaptureCoreNative : Plugin(),
     @PluginMethod
     override fun showView(call: PluginCall) {
         captureViewHandler.setVisible()
-        call.success()
+        call.resolve()
     }
 
     @PluginMethod
     override fun hideView(call: PluginCall) {
         captureViewHandler.setInvisible()
-        call.success()
+        call.resolve()
     }
 
     @PluginMethod
@@ -400,15 +428,15 @@ class ScanditCaptureCoreNative : Plugin(),
             if (captureViewHandler.dataCaptureView == null) {
                 call.reject(NoViewToConvertPointError().serializeContent().toString())
             } else {
+                val pointJson = call.data.getString("point")
+                        ?: return call.reject("Empty strings are not allowed.")
                 val point = SerializablePoint(
-                    JSONObject(
-                        call.data.getString("point")
-                    )
+                    JSONObject(pointJson)
                 ).toScanditPoint()
                 val mappedPoint = captureViewHandler.dataCaptureView!!
                     .mapFramePointToView(point)
                     .dpFromPx()
-                call.success(JSObject(mappedPoint.toJson()))
+                call.resolve(JSObject(mappedPoint.toJson()))
             }
         } catch (e: Exception) { // TODO SDC-1851 fine-catch deserializer exceptions
             e.printStackTrace()
@@ -422,13 +450,13 @@ class ScanditCaptureCoreNative : Plugin(),
             if (captureViewHandler.dataCaptureView == null) {
                 call.reject(NoViewToConvertQuadrilateralError().serializeContent().toString())
             } else {
-                val quadrilateral = QuadrilateralDeserializer.fromJson(
-                    call.data.getString("point")
-                )
+                val pointJson = call.data.getString("point")
+                        ?: return call.reject("Empty strings are not allowed.")
+                val quadrilateral = QuadrilateralDeserializer.fromJson(pointJson)
                 val mappedQuadrilateral = captureViewHandler.dataCaptureView!!
                     .mapFrameQuadrilateralToView(quadrilateral)
                     .dpFromPx()
-                call.success(JSObject(mappedQuadrilateral.toJson()))
+                call.resolve(JSObject(mappedQuadrilateral.toJson()))
             }
         } catch (e: Exception) { // TODO SDC-1851 fine-catch deserializer exceptions
             e.printStackTrace()
@@ -448,7 +476,7 @@ class ScanditCaptureCoreNative : Plugin(),
             feedback.emit()
             latestFeedback = feedback
 
-            call.success()
+            call.resolve()
         } catch (e: JSONException) {
             e.printStackTrace()
             call.reject(JsonParseError(e.message).toString())
@@ -465,7 +493,6 @@ class ScanditCaptureCoreNative : Plugin(),
             val cameraSettings = CameraSettings()
             val dataCaptureView = DataCaptureView.newInstance(context, null)
             val laserViewfinder = LaserlineViewfinder()
-            val laserViewfinders = LaserlineViewfinder()
             val rectangularViewfinder = RectangularViewfinder()
             val aimerViewfinder = AimerViewfinder()
             val brush = Brush.transparent()

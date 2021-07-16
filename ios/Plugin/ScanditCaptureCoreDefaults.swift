@@ -28,12 +28,28 @@ public struct ScanditCaptureCoreDefaults: Encodable {
 
     public struct LaserlineViewfinderDefaults: Encodable {
         let defaultStyle: String
-        let styles: [String: [String: String]]
+        let styles: [String: LaserlineViewfinderStyleDefaults]
+    }
+
+    public struct LaserlineViewfinderStyleDefaults: Encodable {
+        let style: String
+        let width: String
+        let enabledColor: String
+        let disabledColor: String
     }
 
     public struct RectangularViewfinderDefaults: Encodable {
         let defaultStyle: String
-        let styles: [String: [String: String?]]
+        let styles: [String: RectangularViewfinderStyleDefaults]
+    }
+
+    public struct RectangularViewfinderStyleDefaults: Encodable {
+        let style: String
+        let size: String
+        let color: String
+        let lineStyle: String
+        let dimming: Float
+        let animation: String?
     }
 
     struct AimerViewfinderDefaults: Encodable {
@@ -121,17 +137,18 @@ public extension ScanditCaptureCoreDefaults.DataCaptureViewDefaults {
 
 public extension ScanditCaptureCoreDefaults.LaserlineViewfinderDefaults {
     internal typealias Defaults = ScanditCaptureCoreDefaults.LaserlineViewfinderDefaults
+    internal typealias StyleDefaults = ScanditCaptureCoreDefaults.LaserlineViewfinderStyleDefaults
 
     internal static func from(_ viewfinder: LaserlineViewfinder) -> Defaults {
-        func createViewfinderDefaults(style: LaserlineViewfinderStyle) -> [String: String] {
+        func createViewfinderDefaults(style: LaserlineViewfinderStyle) -> StyleDefaults {
             let viewfinder = LaserlineViewfinder(style: style)
-            let defaults = [
-                "style": viewfinder.style.jsonString,
-                "width": viewfinder.width.jsonString,
-                "enabledColor": viewfinder.enabledColor.sdcHexString,
-                "disabledColor": viewfinder.disabledColor.sdcHexString
-            ]
-            return defaults
+
+            return StyleDefaults(
+                style: viewfinder.style.jsonString,
+                width: viewfinder.width.jsonString,
+                enabledColor: viewfinder.enabledColor.sdcHexString,
+                disabledColor: viewfinder.disabledColor.sdcHexString
+            )
         }
 
         return Defaults(
@@ -155,19 +172,20 @@ extension ScanditCaptureCoreDefaults.AimerViewfinderDefaults {
 
 public extension ScanditCaptureCoreDefaults.RectangularViewfinderDefaults {
     internal typealias Defaults = ScanditCaptureCoreDefaults.RectangularViewfinderDefaults
+    internal typealias StyleDefaults = ScanditCaptureCoreDefaults.RectangularViewfinderStyleDefaults
 
     internal static func from(_ viewfinder: RectangularViewfinder) -> Defaults {
-        func createViewfinderDefaults(style: RectangularViewfinderStyle) -> [String: String?] {
+        func createViewfinderDefaults(style: RectangularViewfinderStyle) -> StyleDefaults {
             let viewfinder = RectangularViewfinder(style: style)
-            let defaults = [
-                "style": viewfinder.style.jsonString,
-                "size": viewfinder.sizeWithUnitAndAspect.jsonString,
-                "color": viewfinder.color.sdcHexString,
-                "lineStyle": viewfinder.lineStyle.jsonString,
-                "dimming": viewfinder.dimming.description,
-                "animation": viewfinder.animation?.jsonString
-            ]
-            return defaults
+
+            return StyleDefaults(
+                style: viewfinder.style.jsonString,
+                size: viewfinder.sizeWithUnitAndAspect.jsonString,
+                color: viewfinder.color.sdcHexString,
+                lineStyle: viewfinder.lineStyle.jsonString,
+                dimming: Float(viewfinder.dimming),
+                animation: viewfinder.animation?.jsonString
+            )
         }
 
         return Defaults(

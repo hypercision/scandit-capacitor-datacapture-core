@@ -14,20 +14,7 @@ public protocol DataCapturePlugin where Self: CAPPlugin {
 // swiftlint:disable:next type_body_length
 public class ScanditCaptureCore: CAPPlugin {
 
-    lazy var dataCapturePlugins: [DataCapturePlugin] = {
-        // Register all Scandit plugins with Core.
-        var eligiblePlugins = [DataCapturePlugin]()
-        let plugins = bridge.plugins.filter { $0.key.contains("Scandit") && $0.key != "ScanditCaptureCoreNative" }
-
-        for (_, value) in plugins {
-            guard let plugin = value as? DataCapturePlugin else {
-                break
-            }
-            eligiblePlugins.append(plugin)
-        }
-
-        return eligiblePlugins
-    }()
+    public static var dataCapturePlugins = [DataCapturePlugin]()
 
     public var context: DataCaptureContext?
 
@@ -49,7 +36,7 @@ public class ScanditCaptureCore: CAPPlugin {
             captureView.isHidden = true
             captureView.translatesAutoresizingMaskIntoConstraints = false
 
-            webView.addSubview(captureView)
+            webView?.addSubview(captureView)
             captureViewConstraints.captureView = captureView
         }
     }
@@ -71,19 +58,19 @@ public class ScanditCaptureCore: CAPPlugin {
     }()
 
     private lazy var modeDeserializers: [DataCaptureModeDeserializer] = {
-        return dataCapturePlugins.reduce(into: []) { deserializers, plugin in
+        return ScanditCaptureCore.dataCapturePlugins.reduce(into: []) { deserializers, plugin in
             deserializers.append(contentsOf: plugin.modeDeserializers)
         }
     }()
 
     private lazy var componentDeserializers: [DataCaptureComponentDeserializer] = {
-        return dataCapturePlugins.reduce(into: []) { deserializers, plugin in
+        return ScanditCaptureCore.dataCapturePlugins.reduce(into: []) { deserializers, plugin in
             deserializers.append(contentsOf: plugin.componentDeserializers)
         }
     }()
 
     private lazy var components: [DataCaptureComponent] = {
-        return dataCapturePlugins.reduce(into: []) { components, plugin in
+        return ScanditCaptureCore.dataCapturePlugins.reduce(into: []) { components, plugin in
             components.append(contentsOf: plugin.components)
         }
     }()
@@ -219,9 +206,9 @@ public class ScanditCaptureCore: CAPPlugin {
 
             if viewPositionAndSizeJSON.shouldBeUnderWebView {
                 // Make the WebView transparent, so we can see views behind
-                self.webView.isOpaque = false
-                self.webView.backgroundColor = .clear
-                self.webView.scrollView.backgroundColor = .clear
+                self.webView?.isOpaque = false
+                self.webView?.backgroundColor = .clear
+                self.webView?.scrollView.backgroundColor = .clear
             }
 
             call.resolve()

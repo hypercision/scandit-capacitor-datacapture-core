@@ -724,7 +724,7 @@ var capacitorPlugin = (function (exports, core) {
                     lineStyle: viewfinder.lineStyle,
                     dimming: viewfinder.dimming,
                     animation: RectangularViewfinderAnimation
-                        .fromJSON(JSON.parse(viewfinder.animation)),
+                        .fromJSON(viewfinder.animation ? JSON.parse(viewfinder.animation) : null),
                 };
                 return acc;
             }, { defaultStyle: json.RectangularViewfinder.defaultStyle, styles: {} }),
@@ -1671,6 +1671,15 @@ var capacitorPlugin = (function (exports, core) {
             this.listeners = [];
             this.htmlElement = null;
             this._htmlElementState = new HTMLElementState();
+            this.scrollListener = this.elementDidChange.bind(this);
+            this.domObserver = new MutationObserver(this.elementDidChange.bind(this));
+            this.orientationChangeListener = (() => {
+                this.elementDidChange();
+                // SDC-1784 -> workaround because at the moment of this callback the element doesn't have the updated size.
+                setTimeout(this.elementDidChange.bind(this), 100);
+                setTimeout(this.elementDidChange.bind(this), 300);
+                setTimeout(this.elementDidChange.bind(this), 1000);
+            });
         }
         get context() {
             return this._context;
@@ -1723,6 +1732,11 @@ var capacitorPlugin = (function (exports, core) {
             // Initial update
             this.elementDidChange();
             this.subscribeToChangesOnHTMLElement();
+        }
+        detachFromElement() {
+            this.unsubscribeFromChangesOnHTMLElement();
+            this.htmlElement = null;
+            this.elementDidChange();
         }
         setFrame(frame, isUnderContent = false) {
             return this.viewProxy.setPositionAndSize(frame.origin.y, frame.origin.x, frame.size.width, frame.size.height, isUnderContent);
@@ -1792,19 +1806,14 @@ var capacitorPlugin = (function (exports, core) {
             this._viewProxy = DataCaptureViewProxy.forDataCaptureView(this);
         }
         subscribeToChangesOnHTMLElement() {
-            // Scroll events
-            window.addEventListener('scroll', this.elementDidChange.bind(this));
-            // DOM changes
-            const observer = new MutationObserver(this.elementDidChange.bind(this));
-            observer.observe(document, { attributes: true, childList: true, subtree: true });
-            // Orientation changes
-            window.addEventListener('orientationchange', () => {
-                this.elementDidChange();
-                // SDC-1784 -> workaround because at the moment of this callback the element doesn't have the updated size.
-                setTimeout(this.elementDidChange.bind(this), 100);
-                setTimeout(this.elementDidChange.bind(this), 300);
-                setTimeout(this.elementDidChange.bind(this), 1000);
-            });
+            this.domObserver.observe(document, { attributes: true, childList: true, subtree: true });
+            window.addEventListener('scroll', this.scrollListener);
+            window.addEventListener('orientationchange', this.orientationChangeListener);
+        }
+        unsubscribeFromChangesOnHTMLElement() {
+            this.domObserver.disconnect();
+            window.removeEventListener('scroll', this.scrollListener);
+            window.removeEventListener('orientationchange', this.orientationChangeListener);
         }
         elementDidChange() {
             if (!this.htmlElement) {
@@ -1858,10 +1867,19 @@ var capacitorPlugin = (function (exports, core) {
     __decorate$7([
         ignoreFromSerialization
     ], DataCaptureView.prototype, "_htmlElementState", void 0);
+    __decorate$7([
+        ignoreFromSerialization
+    ], DataCaptureView.prototype, "scrollListener", void 0);
+    __decorate$7([
+        ignoreFromSerialization
+    ], DataCaptureView.prototype, "domObserver", void 0);
+    __decorate$7([
+        ignoreFromSerialization
+    ], DataCaptureView.prototype, "orientationChangeListener", void 0);
 
     class DataCaptureVersion {
         static get pluginVersion() {
-            return '6.8.1';
+            return '6.9.0-beta.1';
         }
     }
 
