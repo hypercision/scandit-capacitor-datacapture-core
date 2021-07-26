@@ -1,3 +1,6 @@
+ext {
+    androidxAppCompatVersion =  project.hasProperty('androidxAppCompatVersion') ? rootProject.ext.androidxAppCompatVersion : '1.2.0'
+}
 
 buildscript {
     ext.kotlin_version = '1.4.21'
@@ -41,9 +44,11 @@ repositories {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    api "com.scandit.datacapture:core:6.9.0-beta.1"
+    api "com.scandit.datacapture:core:6.9.0-beta.2"
 
     implementation project(':capacitor-android')
     implementation "androidx.core:core-ktx:+"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "com.squareup.okhttp3:okhttp:4.9.0"
 }
