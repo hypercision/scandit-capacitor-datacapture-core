@@ -17,7 +17,7 @@ import { CameraPosition, CameraSettings, FocusGestureStrategy, FocusRange, Frame
 import { Feedback, Sound, Vibration, } from './ts/Feedback';
 import { Camera } from './ts/Camera';
 import { DataCaptureContext, DataCaptureContextSettings } from './ts/DataCaptureContext';
-import { Anchor, DataCaptureView, HTMLElementState, TorchSwitchControl, } from './ts/DataCaptureView';
+import { Anchor, DataCaptureView, HTMLElementState, TorchSwitchControl, ZoomSwitchControl, } from './ts/DataCaptureView';
 import { SwipeToZoom, TapToFocus, } from './ts/DataCaptureView+Related';
 import { DataCaptureVersion, } from './ts/DataCaptureVersion';
 import { NoneLocationSelection, } from './ts/LocationSelection';
@@ -69,6 +69,7 @@ export class ScanditCaptureCorePlugin extends WebPlugin {
                 Anchor,
                 DataCaptureView,
                 TorchSwitchControl,
+                ZoomSwitchControl,
                 TapToFocus,
                 SwipeToZoom,
                 DataCaptureVersion,

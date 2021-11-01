@@ -44,7 +44,7 @@ repositories {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    api "com.scandit.datacapture:core:6.9.2"
+    api "com.scandit.datacapture:core:6.10.0"
 
     implementation project(':capacitor-android')
     implementation "androidx.core:core-ktx:1.6.0"

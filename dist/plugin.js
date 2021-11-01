@@ -1636,6 +1636,52 @@ var capacitorPlugin = (function (exports, core) {
     __decorate$7([
         ignoreFromSerialization
     ], TorchSwitchControl.prototype, "view", void 0);
+    class ZoomSwitchControl extends DefaultSerializeable {
+        constructor() {
+            super(...arguments);
+            this.type = 'zoom';
+            this.icon = {
+                zoomedOut: { default: null, pressed: null },
+                zoomedIn: { default: null, pressed: null },
+            };
+            this.view = null;
+        }
+        get zoomedOutImage() {
+            return this.icon.zoomedOut.default;
+        }
+        set zoomedOutImage(zoomedOutImage) {
+            var _a;
+            this.icon.zoomedOut.default = zoomedOutImage;
+            (_a = this.view) === null || _a === void 0 ? void 0 : _a.controlUpdated();
+        }
+        get zoomedInImage() {
+            return this.icon.zoomedIn.default;
+        }
+        set zoomedInImage(zoomedInImage) {
+            var _a;
+            this.icon.zoomedIn.default = zoomedInImage;
+            (_a = this.view) === null || _a === void 0 ? void 0 : _a.controlUpdated();
+        }
+        get zoomedInPressedImage() {
+            return this.icon.zoomedIn.pressed;
+        }
+        set zoomedInPressedImage(zoomedInPressedImage) {
+            var _a;
+            this.icon.zoomedIn.pressed = zoomedInPressedImage;
+            (_a = this.view) === null || _a === void 0 ? void 0 : _a.controlUpdated();
+        }
+        get zoomedOutPressedImage() {
+            return this.icon.zoomedOut.pressed;
+        }
+        set zoomedOutPressedImage(zoomedOutPressedImage) {
+            var _a;
+            this.icon.zoomedOut.pressed = zoomedOutPressedImage;
+            (_a = this.view) === null || _a === void 0 ? void 0 : _a.controlUpdated();
+        }
+    }
+    __decorate$7([
+        ignoreFromSerialization
+    ], ZoomSwitchControl.prototype, "view", void 0);
     var Anchor;
     (function (Anchor) {
         Anchor["TopLeft"] = "topLeft";
@@ -1891,7 +1937,7 @@ var capacitorPlugin = (function (exports, core) {
 
     class DataCaptureVersion {
         static get pluginVersion() {
-            return '6.9.2';
+            return '6.10.0';
         }
     }
 
@@ -2005,6 +2051,7 @@ var capacitorPlugin = (function (exports, core) {
                     Anchor,
                     DataCaptureView,
                     TorchSwitchControl,
+                    ZoomSwitchControl,
                     TapToFocus,
                     SwipeToZoom,
                     DataCaptureVersion,
