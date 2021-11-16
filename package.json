@@ -1,6 +1,6 @@
 {
   "name": "scandit-capacitor-datacapture-core",
-  "version": "6.10.0",
+  "version": "6.10.1",
   "description": "Scandit Data Capture SDK for Capacitor",
   "license": "Apache-2.0",
   "author": {
@@ -35,7 +35,7 @@
     "tslint": "^5.16.0"
   },
   "peerDependencies": {
-    "@capacitor/core": "^2.0.0"
+    "@capacitor/core": ">=2.0.0"
   },
   "files": [
     "dist/",
