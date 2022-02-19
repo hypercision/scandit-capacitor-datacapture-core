@@ -62,10 +62,10 @@ val Int.hexString: String
 
 val String.colorInt: Int
     get() = Color.parseColor(
-            // ts is giving the color in format RRGGBBAA, we need to move the alpha and add the #.
-            "#" +
-                substring(6, 8) +
-                substring(0, 6)
+        // ts is giving the color in format RRGGBBAA, we need to move the alpha and add the #.
+        "#" +
+            substring(6, 8) +
+            substring(0, 6)
     )
 
 fun bitmapFromBase64String(string: String?): Bitmap? {
@@ -76,8 +76,8 @@ fun bitmapFromBase64String(string: String?): Bitmap? {
         val trimmedString = string.removeRange(0, index)
         val bytes = Base64.decode(trimmedString, Base64.DEFAULT)
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-    } catch (e: Exception) {
-        e.printStackTrace()
+    } catch (ex: Exception) {
+        println(ex)
         null
     }
 }

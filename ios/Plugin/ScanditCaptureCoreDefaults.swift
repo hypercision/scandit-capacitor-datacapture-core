@@ -49,6 +49,7 @@ public struct ScanditCaptureCoreDefaults: Encodable {
         let color: String
         let lineStyle: String
         let dimming: Float
+        let disabledDimming: Float
         let animation: String?
     }
 
@@ -184,6 +185,7 @@ public extension ScanditCaptureCoreDefaults.RectangularViewfinderDefaults {
                 color: viewfinder.color.sdcHexString,
                 lineStyle: viewfinder.lineStyle.jsonString,
                 dimming: Float(viewfinder.dimming),
+                disabledDimming: Float(viewfinder.disabledDimming),
                 animation: viewfinder.animation?.jsonString
             )
         }

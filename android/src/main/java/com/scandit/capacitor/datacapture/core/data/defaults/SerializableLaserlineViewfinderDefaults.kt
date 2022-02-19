@@ -21,16 +21,16 @@ class SerializableLaserlineViewfinderDefaults(
 ) : SerializableData {
 
     override fun toJson(): JSONObject = JSONObject(
-            mapOf(
-                    FIELD_VIEW_FINDER_DEFAULT_STYLE to viewFinder.style.toJson(),
-                    FIELD_VIEW_FINDER_STYLES to mapOf(
-                            LaserlineViewfinderStyle.ANIMATED.toJson() to
-                                    createViewfinderDefaults(LaserlineViewfinderStyle.ANIMATED),
-                            LaserlineViewfinderStyle.LEGACY.toJson() to
-                                    createViewfinderDefaults(LaserlineViewfinderStyle.LEGACY)
-                    )
-
+        mapOf(
+            FIELD_VIEW_FINDER_DEFAULT_STYLE to viewFinder.style.toJson(),
+            FIELD_VIEW_FINDER_STYLES to mapOf(
+                LaserlineViewfinderStyle.ANIMATED.toJson() to
+                    createViewfinderDefaults(LaserlineViewfinderStyle.ANIMATED),
+                LaserlineViewfinderStyle.LEGACY.toJson() to
+                    createViewfinderDefaults(LaserlineViewfinderStyle.LEGACY)
             )
+
+        )
     )
 
     private fun createViewfinderDefaults(
@@ -38,10 +38,10 @@ class SerializableLaserlineViewfinderDefaults(
     ): Map<String, Any?> {
         return with(LaserlineViewfinder(style)) {
             mapOf(
-                    FIELD_WIDTH to width.toJson(),
-                    FIELD_ENABLED_COLOR to enabledColor.hexString,
-                    FIELD_DISABLED_COLOR to disabledColor.hexString,
-                    FIELD_VIEW_FINDER_STYLE to style.toJson()
+                FIELD_WIDTH to width.toJson(),
+                FIELD_ENABLED_COLOR to enabledColor.hexString,
+                FIELD_DISABLED_COLOR to disabledColor.hexString,
+                FIELD_VIEW_FINDER_STYLE to style.toJson()
             )
         }
     }

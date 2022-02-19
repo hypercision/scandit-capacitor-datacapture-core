@@ -7,9 +7,9 @@
 package com.scandit.capacitor.datacapture.core.data
 
 import com.scandit.datacapture.core.common.geometry.Point
-import kotlin.jvm.Throws
 import org.json.JSONException
 import org.json.JSONObject
+import kotlin.jvm.Throws
 
 data class SerializablePoint(private val x: Double, private val y: Double) {
 

@@ -7,8 +7,8 @@
 package com.scandit.capacitor.datacapture.core.errors
 
 class NoViewToConvertQuadrilateralError : ActionError(
-        ERROR_CODE,
-        "There is no view shown, so the quadrilateral cannot be converted into its coordinate space"
+    ERROR_CODE,
+    "There is no view shown, so the quadrilateral cannot be converted into its coordinate space"
 ) {
     companion object {
         private const val ERROR_CODE = 10032

@@ -22,15 +22,15 @@ data class SerializableDataCaptureViewDefaults(
 ) : SerializableData {
 
     override fun toJson(): JSONObject = JSONObject(
-            mapOf(
-                    FIELD_MARGINS to scanAreaMargins,
-                    FIELD_POI to pointOfInterest,
-                    FIELD_LOGO_ANCHOR to logoAnchor,
-                    FIELD_LOGO_OFFSET to logoOffset,
-                    FIELD_FOCUS_GESTURE to focusGesture,
-                    FIELD_ZOOM_GESTURE to zoomGesture,
-                    FIELD_LOGO_STYLE to logoStyle
-            )
+        mapOf(
+            FIELD_MARGINS to scanAreaMargins,
+            FIELD_POI to pointOfInterest,
+            FIELD_LOGO_ANCHOR to logoAnchor,
+            FIELD_LOGO_OFFSET to logoOffset,
+            FIELD_FOCUS_GESTURE to focusGesture,
+            FIELD_ZOOM_GESTURE to zoomGesture,
+            FIELD_LOGO_STYLE to logoStyle
+        )
     )
 
     companion object {

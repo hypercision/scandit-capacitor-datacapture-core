@@ -20,18 +20,18 @@ class SerializableRectangularViewfinderDefaults(
 ) : SerializableData {
 
     override fun toJson(): JSONObject = JSONObject(
-            mapOf(
-                    FIELD_VIEW_FINDER_DEFAULT_STYLE to viewFinder.style.toJson(),
-                    FIELD_VIEW_FINDER_STYLES to mapOf(
-                            RectangularViewfinderStyle.LEGACY.toJson() to
-                                    createViewfinderDefaults(RectangularViewfinderStyle.LEGACY),
-                            RectangularViewfinderStyle.ROUNDED.toJson() to
-                                    createViewfinderDefaults(RectangularViewfinderStyle.ROUNDED),
-                            RectangularViewfinderStyle.SQUARE.toJson() to
-                                    createViewfinderDefaults(RectangularViewfinderStyle.SQUARE)
-                    )
-
+        mapOf(
+            FIELD_VIEW_FINDER_DEFAULT_STYLE to viewFinder.style.toJson(),
+            FIELD_VIEW_FINDER_STYLES to mapOf(
+                RectangularViewfinderStyle.LEGACY.toJson() to
+                    createViewfinderDefaults(RectangularViewfinderStyle.LEGACY),
+                RectangularViewfinderStyle.ROUNDED.toJson() to
+                    createViewfinderDefaults(RectangularViewfinderStyle.ROUNDED),
+                RectangularViewfinderStyle.SQUARE.toJson() to
+                    createViewfinderDefaults(RectangularViewfinderStyle.SQUARE)
             )
+
+        )
     )
 
     private fun createViewfinderDefaults(
@@ -39,12 +39,13 @@ class SerializableRectangularViewfinderDefaults(
     ): Map<String, Any?> {
         return with(RectangularViewfinder(style)) {
             mapOf(
-                    FIELD_VIEW_FINDER_SIZE to sizeWithUnitAndAspect.toJson(),
-                    FIELD_VIEW_FINDER_COLOR to color.hexString,
-                    FIELD_VIEW_FINDER_STYLE to style.toJson(),
-                    FIELD_VIEW_FINDER_LINE_STYLE to lineStyle.toJson(),
-                    FIELD_VIEW_FINDER_DIMMING to dimming,
-                    FIELD_VIEW_FINDER_ANIMATION to animation?.toJson()
+                FIELD_VIEW_FINDER_SIZE to sizeWithUnitAndAspect.toJson(),
+                FIELD_VIEW_FINDER_COLOR to color.hexString,
+                FIELD_VIEW_FINDER_STYLE to style.toJson(),
+                FIELD_VIEW_FINDER_LINE_STYLE to lineStyle.toJson(),
+                FIELD_VIEW_FINDER_DIMMING to dimming,
+                FIELD_VIEW_FINDER_DISABLED_DIMMING to disabledDimming,
+                FIELD_VIEW_FINDER_ANIMATION to animation?.toJson()
             )
         }
     }
@@ -57,6 +58,7 @@ class SerializableRectangularViewfinderDefaults(
         private const val FIELD_VIEW_FINDER_STYLE = "style"
         private const val FIELD_VIEW_FINDER_LINE_STYLE = "lineStyle"
         private const val FIELD_VIEW_FINDER_DIMMING = "dimming"
+        private const val FIELD_VIEW_FINDER_DISABLED_DIMMING = "disabledDimming"
         private const val FIELD_VIEW_FINDER_ANIMATION = "animation"
     }
 }

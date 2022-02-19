@@ -19,9 +19,9 @@ abstract class ActionError(
     }
 
     fun serializeContent(): JSONObject = JSONObject(
-            mapOf(
-                    KEY_CODE to errorCode,
-                    KEY_MESSAGE to errorMessage
-            )
+        mapOf(
+            KEY_CODE to errorCode,
+            KEY_MESSAGE to errorMessage
+        )
     )
 }

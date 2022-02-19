@@ -19,15 +19,15 @@ class SerializableViewState(
     private val orientation = ScreenOrientation.fromOrientationInt(screenOrientation.toAngle())
 
     fun toJson(): JSONObject = JSONObject(
-            mapOf(
-                    FIELD_ORIENTATION to orientation.camelCaseName,
-                    FIELD_SIZE to JSONObject(
-                            mapOf(
-                                    FIELD_SIZE_WIDTH to width,
-                                    FIELD_SIZE_HEIGHT to height
-                            )
-                    )
+        mapOf(
+            FIELD_ORIENTATION to orientation.camelCaseName,
+            FIELD_SIZE to JSONObject(
+                mapOf(
+                    FIELD_SIZE_WIDTH to width,
+                    FIELD_SIZE_HEIGHT to height
+                )
             )
+        )
     )
 
     enum class ScreenOrientation {

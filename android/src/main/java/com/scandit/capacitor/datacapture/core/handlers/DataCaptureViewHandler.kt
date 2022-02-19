@@ -41,7 +41,7 @@ class DataCaptureViewHandler(
         }
     }
 
-    fun attachWebView(webView: View, activity: Activity) {
+    fun attachWebView(webView: View, @Suppress("UNUSED_PARAMETER") activity: Activity) {
         if (this.webView != webView) {
             webViewReference = WeakReference(webView)
             uiWorker.post {
@@ -87,11 +87,11 @@ class DataCaptureViewHandler(
 
         uiWorker.post {
             activity.addContentView(
-                    dataCaptureView,
-                    ViewGroup.LayoutParams(
-                        latestInfo.width.pxFromDp().toInt(),
-                        latestInfo.height.pxFromDp().toInt()
-                    )
+                dataCaptureView,
+                ViewGroup.LayoutParams(
+                    latestInfo.width.pxFromDp().toInt(),
+                    latestInfo.height.pxFromDp().toInt()
+                )
             )
             render()
         }
@@ -119,7 +119,6 @@ class DataCaptureViewHandler(
 
     private fun renderNoAnimate(dataCaptureView: DataCaptureView) {
         dataCaptureView.post {
-            val context = dataCaptureView.context
             dataCaptureView.visibility = if (isVisible) View.VISIBLE else View.GONE
             dataCaptureView.x = latestInfo.left.pxFromDp()
             dataCaptureView.y = latestInfo.top.pxFromDp()
