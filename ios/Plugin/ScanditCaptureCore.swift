@@ -209,6 +209,10 @@ public class ScanditCaptureCore: CAPPlugin {
                 self.webView?.isOpaque = false
                 self.webView?.backgroundColor = .clear
                 self.webView?.scrollView.backgroundColor = .clear
+            } else {
+                self.webView?.isOpaque = true
+                self.webView?.backgroundColor = nil
+                self.webView?.scrollView.backgroundColor = nil
             }
 
             call.resolve()

@@ -1,6 +1,6 @@
 {
   "name": "scandit-capacitor-datacapture-core",
-  "version": "6.11.0",
+  "version": "6.12.0",
   "description": "Scandit Data Capture SDK for Capacitor",
   "license": "Apache-2.0",
   "author": {
@@ -10,8 +10,9 @@
   "homepage": "https://github.com/Scandit/scandit-capacitor-datacapture-core",
   "main": "dist/plugin.js",
   "module": "dist/esm/index.js",
-  "types": "dist/esm/index.d.ts",
+  "types": "dist/esm/definitions.d.ts",
   "scripts": {
+    "postbuild": "node ./scripts/normalize-d-ts.js",
     "lint": "tslint --project . && npm run swiftlint -- lint",
     "prettier": "prettier \"**/*.{css,html,ts,js,java}\"",
     "swiftlint": "node-swiftlint",

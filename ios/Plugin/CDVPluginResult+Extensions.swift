@@ -30,6 +30,10 @@ public struct ListenerEvent {
         case offsetForTrackedBarcode = "onOffsetForTrackedBarcodeEvent"
         case didTapViewForTrackedBarcode = "onTapViewForTrackedBarcodeEvent"
 
+        // Barcode Selection listener
+        case didUpdateSelectionInBarcodeSelection = "didUpdateSelectionInBarcodeSelection"
+        case didUpdateSessionInBarcodeSelection = "didUpdateSessionInBarcodeSelection"
+
         // Text Capture Listener
         case didCaptureInTextCapture = "didCaptureInTextCapture"
 
@@ -85,6 +89,13 @@ public struct CommandError {
         case parserNotFound = 10061
         case couldNotParseString = 10062
         case couldNotParseRawString = 10063
+
+        case noOverlay = 10071
+        case noBarcodeSelection = 10072
+        case noBarcodeSelectionSession = 10073
+        case noBarcodeSelectionOverlay = 10074
+        case noBarcodeCaptureSession = 10075
+        case noBarcodeTrackingSession = 10076
     }
 
     public static let invalidJSON = CommandError(code: .invalidJSON,
@@ -137,6 +148,34 @@ public struct CommandError {
         return CommandError(code: .couldNotParseRawString,
                             message: "Could not parse raw string: \(additionalInformation)")
     }
+
+    public static let noOverlay = CommandError(code: .noOverlay,
+                                               message: "There was no overlay to execute the command on")
+
+    public static let noBarcodeSelection = CommandError(code: .noBarcodeSelection,
+                                               message: """
+                                                There was no BarcodeSelection mode to execute the command on
+                                                """)
+
+    public static let noBarcodeCaptureSession = CommandError(code: .noBarcodeCaptureSession,
+                                               message: """
+                                                There was no BarcodeCapture session to execute the command on
+                                                """)
+
+    public static let noBarcodeTrackingSession = CommandError(code: .noBarcodeTrackingSession,
+                                               message: """
+                                                There was no BarcodeTracking session to execute the command on
+                                                """)
+
+    public static let noBarcodeSelectionSession = CommandError(code: .noBarcodeSelectionSession,
+                                               message: """
+                                                There was no BarcodeSelection session to execute the command on
+                                                """)
+
+    public static let noBarcodeSelectionOverlay = CommandError(code: .noBarcodeSelectionOverlay,
+                                               message: """
+                                                There was no BarcodeSelection overlay to execute the command on
+                                                """)
 
     public let code: Code
     public let message: String

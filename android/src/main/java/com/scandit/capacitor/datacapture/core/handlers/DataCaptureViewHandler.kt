@@ -131,6 +131,7 @@ class DataCaptureViewHandler(
                 (webView?.parent as View).translationZ = 1F
             } else {
                 dataCaptureView.bringToFront()
+                (webView?.parent as View).translationZ = -1F
             }
             dataCaptureView.requestLayout()
         }
