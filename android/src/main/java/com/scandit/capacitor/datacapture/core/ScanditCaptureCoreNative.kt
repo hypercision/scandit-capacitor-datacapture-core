@@ -94,7 +94,7 @@ class ScanditCaptureCoreNative :
         private val SCANDIT_PLUGINS = listOf(
             "ScanditBarcodeNative",
             "ScanditParserNative",
-            "ScanditTextNative",
+            "ScanditTextNative"
         )
     }
 
