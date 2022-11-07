@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { WebPlugin } from '@capacitor/core';
+import { registerPlugin } from '@capacitor/core';
 import { getDefaults } from './ts/Capacitor/Capacitor';
 import { Color, Direction, MarginsWithUnit, MeasureUnit, NumberWithUnit, Orientation, Point, PointWithUnit, Quadrilateral, Rect, RectWithUnit, Size, SizeWithAspect, SizeWithUnit, SizeWithUnitAndAspect, SizingMode, } from './ts/Common';
 import { RadiusLocationSelection, RectangularLocationSelection, } from './ts/LocationSelection';
@@ -23,13 +23,7 @@ import { DataCaptureVersion, } from './ts/DataCaptureVersion';
 import { NoneLocationSelection, } from './ts/LocationSelection';
 import { VolumeButtonObserver, } from './ts/VolumeButtonObserver';
 const corePluginName = 'ScanditCaptureCorePlugin';
-export class ScanditCaptureCorePlugin extends WebPlugin {
-    constructor() {
-        super({
-            name: corePluginName,
-            platforms: ['ios', 'android'],
-        });
-    }
+export class ScanditCaptureCorePluginImplementation {
     initializePlugins() {
         return __awaiter(this, void 0, void 0, function* () {
             let api = {
@@ -96,8 +90,10 @@ export class ScanditCaptureCorePlugin extends WebPlugin {
         });
     }
 }
-const scanditCaptureCore = new ScanditCaptureCorePlugin();
-export { scanditCaptureCore };
-import { registerWebPlugin } from '@capacitor/core';
-registerWebPlugin(scanditCaptureCore);
+registerPlugin(corePluginName, {
+    android: () => new ScanditCaptureCorePluginImplementation(),
+    ios: () => new ScanditCaptureCorePluginImplementation(),
+});
+// tslint:disable-next-line:variable-name
+export const ScanditCaptureCorePlugin = new ScanditCaptureCorePluginImplementation();
 //# sourceMappingURL=web.js.map

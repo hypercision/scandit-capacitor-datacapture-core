@@ -2,6 +2,8 @@ export declare type Optional<T> = T | null;
 export interface ScanditCaptureCorePluginInterface {
     initializePlugins(): Promise<any>;
 }
+
+export const ScanditCaptureCorePlugin: ScanditCaptureCorePluginInterface;
 declare module Scandit {
 
 export enum FrameSourceState {
@@ -1022,3 +1024,4 @@ export class VolumeButtonObserver {
 }
 
 }
+

@@ -1,36 +1,21 @@
 package com.scandit.capacitor.datacapture.core
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.util.Log
-import com.getcapacitor.JSObject
-import com.getcapacitor.NativePlugin
-import com.getcapacitor.Plugin
-import com.getcapacitor.PluginCall
-import com.getcapacitor.PluginMethod
+import com.getcapacitor.*
+import com.getcapacitor.annotation.CapacitorPlugin
+import com.getcapacitor.annotation.Permission
+import com.getcapacitor.annotation.PermissionCallback
 import com.scandit.capacitor.datacapture.core.communication.CameraPermissionGrantedListener
 import com.scandit.capacitor.datacapture.core.communication.ComponentDeserializersProvider
 import com.scandit.capacitor.datacapture.core.communication.ModeDeserializersProvider
 import com.scandit.capacitor.datacapture.core.data.ResizeAndMoveInfo
 import com.scandit.capacitor.datacapture.core.data.SerializablePoint
 import com.scandit.capacitor.datacapture.core.data.SerializableViewState
-import com.scandit.capacitor.datacapture.core.data.defaults.SerializableAimerViewfinderDefaults
-import com.scandit.capacitor.datacapture.core.data.defaults.SerializableBrushDefaults
-import com.scandit.capacitor.datacapture.core.data.defaults.SerializableCameraDefaults
-import com.scandit.capacitor.datacapture.core.data.defaults.SerializableCameraSettingsDefault
-import com.scandit.capacitor.datacapture.core.data.defaults.SerializableCoreDefaults
-import com.scandit.capacitor.datacapture.core.data.defaults.SerializableDataCaptureViewDefaults
-import com.scandit.capacitor.datacapture.core.data.defaults.SerializableLaserlineViewfinderDefaults
-import com.scandit.capacitor.datacapture.core.data.defaults.SerializableRectangularViewfinderDefaults
+import com.scandit.capacitor.datacapture.core.data.defaults.*
 import com.scandit.capacitor.datacapture.core.deserializers.Deserializers
 import com.scandit.capacitor.datacapture.core.deserializers.DeserializersProvider
-import com.scandit.capacitor.datacapture.core.errors.CameraPositionDeserializationError
-import com.scandit.capacitor.datacapture.core.errors.ContextDeserializationError
-import com.scandit.capacitor.datacapture.core.errors.JsonParseError
-import com.scandit.capacitor.datacapture.core.errors.NoCameraAvailableError
-import com.scandit.capacitor.datacapture.core.errors.NoCameraWithPositionError
-import com.scandit.capacitor.datacapture.core.errors.NoViewToConvertPointError
-import com.scandit.capacitor.datacapture.core.errors.NoViewToConvertQuadrilateralError
+import com.scandit.capacitor.datacapture.core.errors.*
 import com.scandit.capacitor.datacapture.core.handlers.DataCaptureComponentsHandler
 import com.scandit.capacitor.datacapture.core.handlers.DataCaptureContextHandler
 import com.scandit.capacitor.datacapture.core.handlers.DataCaptureViewHandler
@@ -46,17 +31,9 @@ import com.scandit.datacapture.core.common.geometry.QuadrilateralDeserializer
 import com.scandit.datacapture.core.common.geometry.toJson
 import com.scandit.datacapture.core.component.serialization.DataCaptureComponentDeserializer
 import com.scandit.datacapture.core.json.JsonValue
-import com.scandit.datacapture.core.source.Camera
-import com.scandit.datacapture.core.source.CameraPosition
-import com.scandit.datacapture.core.source.CameraPositionDeserializer
-import com.scandit.datacapture.core.source.CameraSettings
-import com.scandit.datacapture.core.source.FrameSource
-import com.scandit.datacapture.core.source.FrameSourceState
-import com.scandit.datacapture.core.source.FrameSourceStateDeserializer
-import com.scandit.datacapture.core.source.TorchStateDeserializer
+import com.scandit.datacapture.core.source.*
 import com.scandit.datacapture.core.source.serialization.FrameSourceDeserializer
 import com.scandit.datacapture.core.source.serialization.FrameSourceDeserializerListener
-import com.scandit.datacapture.core.source.toJson
 import com.scandit.datacapture.core.ui.DataCaptureView
 import com.scandit.datacapture.core.ui.DataCaptureViewListener
 import com.scandit.datacapture.core.ui.style.Brush
@@ -66,14 +43,11 @@ import com.scandit.datacapture.core.ui.viewfinder.RectangularViewfinder
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import java.util.concurrent.atomic.AtomicBoolean
 
-@NativePlugin(
-    requestCodes = [
-        ScanditCaptureCoreNative.CODE_CAMERA_PERMISSIONS
-    ],
+@CapacitorPlugin(
+    name = "ScanditCaptureCoreNative",
     permissions = [
-        Manifest.permission.CAMERA
+        Permission(strings = [Manifest.permission.CAMERA], alias = "camera")
     ]
 )
 class ScanditCaptureCoreNative :
@@ -85,8 +59,6 @@ class ScanditCaptureCoreNative :
     FrameSourceDeserializerListener {
 
     companion object {
-        const val CODE_CAMERA_PERMISSIONS = 200
-
         private const val ACTION_STATUS_CHANGED = "didChangeStatus"
         private const val ACTION_CONTEXT_OBSERVATION_STARTED = "didStartObservingContext"
         private const val ACTION_VIEW_SIZE_CHANGED = "didChangeSizeOrientation"
@@ -94,14 +66,12 @@ class ScanditCaptureCoreNative :
         private val SCANDIT_PLUGINS = listOf(
             "ScanditBarcodeNative",
             "ScanditParserNative",
+            "ScanditIdNative",
             "ScanditTextNative"
         )
     }
 
     private val uiWorker = UiWorker()
-
-    private val cameraPermissionsGranted: AtomicBoolean = AtomicBoolean(false)
-    private val cameraPermissionsRequested: AtomicBoolean = AtomicBoolean(false)
 
     private val captureContextHandler = DataCaptureContextHandler(this)
     private val captureComponentsHandler = DataCaptureComponentsHandler()
@@ -160,7 +130,6 @@ class ScanditCaptureCoreNative :
         }
 
         captureViewHandler.attachWebView(bridge.webView, bridge.activity)
-        checkOrRequestCameraPermission()
     }
 
     private fun retrieveAllModeDeserializers(): List<DataCaptureModeDeserializer> =
@@ -175,45 +144,41 @@ class ScanditCaptureCoreNative :
             .map { it.provideComponentDeserializers() }
             .flatten()
 
-    private fun checkCameraPermission(): Boolean {
-        val hasPermission = hasRequiredPermissions()
-        if (hasPermission) {
-            cameraPermissionsGranted.set(true)
-            cameraPermissionsRequested.set(false)
-        }
-        return hasPermission
-    }
+    private fun checkCameraPermission(): Boolean =
+        getPermissionState("camera") == PermissionState.GRANTED
 
-    private fun checkOrRequestCameraPermission() {
-        if (checkCameraPermission().not()) {
-            pluginRequestPermissions(
-                arrayOf(
-                    Manifest.permission.CAMERA
-                ),
-                CODE_CAMERA_PERMISSIONS
-            )
+    private fun checkOrRequestInitialCameraPermission(call: PluginCall) {
+        if (getPermissionState("camera") != PermissionState.GRANTED) {
+            requestPermissionForAlias("camera", call, "initialCameraPermsCallback")
+        } else {
+            initializeContextFromJson(call)
         }
     }
 
-    override fun handleRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>?,
-        grantResults: IntArray?
-    ) {
-        super.handleRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        for (result in grantResults!!) {
-            if (result == PackageManager.PERMISSION_DENIED) {
-                cameraPermissionsRequested.set(false)
-                return
-            }
+    private fun checkOrRequestUpdateCameraPermission(call: PluginCall) {
+        if (getPermissionState("camera") != PermissionState.GRANTED) {
+            requestPermissionForAlias("camera", call, "updateCameraPermsCallback")
+        } else {
+            updateContext(call)
         }
+    }
 
-        if (requestCode == CODE_CAMERA_PERMISSIONS) {
-            cameraPermissionsGranted.set(true)
-            cameraPermissionsRequested.set(false)
+    @Suppress("unused")
+    @PermissionCallback
+    private fun initialCameraPermsCallback(call: PluginCall) {
+        if (getPermissionState("camera") == PermissionState.GRANTED) {
             notifyCameraPermissionGrantedToPlugins()
         }
+        initializeContextFromJson(call)
+    }
+
+    @Suppress("unused")
+    @PermissionCallback
+    private fun updateCameraPermsCallback(call: PluginCall) {
+        if (getPermissionState("camera") == PermissionState.GRANTED) {
+            notifyCameraPermissionGrantedToPlugins()
+        }
+        updateContext(call)
     }
 
     private fun notifyCameraPermissionGrantedToPlugins() {
@@ -326,6 +291,10 @@ class ScanditCaptureCoreNative :
     //region DataCaptureContextProxy
     @PluginMethod
     override fun contextFromJSON(call: PluginCall) {
+        checkOrRequestInitialCameraPermission(call)
+    }
+
+    private fun initializeContextFromJson(call: PluginCall) {
         try {
             val jsonString = call.data.getString("context")
                 ?: return call.reject("Empty strings are not allowed.")
@@ -358,6 +327,10 @@ class ScanditCaptureCoreNative :
 
     @PluginMethod
     override fun updateContextFromJSON(call: PluginCall) {
+        checkOrRequestUpdateCameraPermission(call)
+    }
+
+    private fun updateContext(call: PluginCall) {
         try {
             if (captureContextHandler.dataCaptureContext == null) {
                 captureContextHandler.attachDataCaptureContext(

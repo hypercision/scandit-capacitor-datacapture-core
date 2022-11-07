@@ -188,7 +188,7 @@ public class ScanditCaptureCore: CAPPlugin {
     @objc(disposeContext:)
     func disposeContext(_ call: CAPPluginCall) {
         context?.dispose()
-        call.success()
+        call.resolve()
     }
 
     // MARK: - DataCaptureViewProxy

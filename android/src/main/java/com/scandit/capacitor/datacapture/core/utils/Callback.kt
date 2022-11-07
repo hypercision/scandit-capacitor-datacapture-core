@@ -8,6 +8,7 @@ package com.scandit.capacitor.datacapture.core.utils
 
 import java.util.concurrent.atomic.AtomicBoolean
 
+@Suppress("UnnecessaryAbstractClass")
 abstract class Callback {
 
     protected val disposed: AtomicBoolean = AtomicBoolean(false)
