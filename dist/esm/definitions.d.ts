@@ -84,6 +84,39 @@ export class CameraSettings {
     setProperty(name: string, value: any): void;
     getProperty(name: string): any;
 }
+export interface FrameDataJSON {
+    imageBuffers: ImageBufferJSON[];
+    orientation: number;
+}
+export interface ImageBufferJSON {
+    width: number;
+    height: number;
+    data: string;
+}
+interface PrivateImageBuffer {
+    _width: number;
+    _height: number;
+    _data: string;
+}
+export interface FrameData {
+    readonly imageBuffers: ImageBuffer[];
+    readonly orientation: number;
+}
+export class ImageBuffer {
+    private _width;
+    private _height;
+    private _data;
+    get width(): number;
+    get height(): number;
+    get data(): string;
+}
+class PrivateFrameData implements FrameData {
+    private _imageBuffers;
+    private _orientation;
+    get imageBuffers(): ImageBuffer[];
+    get orientation(): number;
+    static fromJSON(json: FrameDataJSON): FrameData;
+}
 
 
 interface PrivateCamera {
@@ -123,10 +156,13 @@ export class Camera implements FrameSource {
     private didChange;
 }
 
+
  
 export class CameraProxy {
     private camera;
     static forCamera(camera: Camera): CameraProxy;
+    static getLastFrame(): Promise<FrameData>;
+    static getLastFrameOrNull(): Promise<FrameData | null>;
     getCurrentState(): Promise<FrameSourceState>;
     getIsTorchAvailable(): Promise<boolean>;
 }
@@ -147,9 +183,15 @@ export enum CapacitorFunction {
     SubscribeViewListener = "subscribeViewListener",
     GetCurrentCameraState = "getCurrentCameraState",
     GetIsTorchAvailable = "getIsTorchAvailable",
+    GetLastFrame = "getLastFrame",
+    GetLastFrameOrNull = "getLastFrameOrNull",
     EmitFeedback = "emitFeedback",
     SubscribeVolumeButtonObserver = "subscribeVolumeButtonObserver",
     UnsubscribeVolumeButtonObserver = "unsubscribeVolumeButtonObserver"
+}
+export interface CapacitorWindow extends Window {
+    Scandit: any;
+    Capacitor: any;
 }
 export const pluginName = "ScanditCaptureCoreNative";
 export const Capacitor: {
@@ -157,7 +199,7 @@ export const Capacitor: {
     defaults: Defaults;
     exec: (success: Function | null, error: Function | null, functionName: string, args: Optional<[any]>) => void;
 };
-export const getDefaults: Promise<Defaults>;
+export const getDefaults: () => Promise<Defaults>;
 
 export class CapacitorError {
     code: number;

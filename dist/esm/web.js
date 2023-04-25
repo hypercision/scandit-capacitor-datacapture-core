@@ -26,6 +26,7 @@ const corePluginName = 'ScanditCaptureCorePlugin';
 export class ScanditCaptureCorePluginImplementation {
     initializePlugins() {
         return __awaiter(this, void 0, void 0, function* () {
+            const coreDefaults = yield getDefaults();
             let api = {
                 Feedback,
                 Camera,
@@ -80,19 +81,20 @@ export class ScanditCaptureCorePluginImplementation {
             };
             for (const key of Object.keys(window.Capacitor.Plugins)) {
                 if (key.startsWith('Scandit') && key.indexOf('Native') < 0 && key !== corePluginName) {
-                    const pluginApi = yield window.Capacitor.Plugins[key].initialize();
-                    api = Object.assign(Object.assign({}, api), pluginApi);
+                    yield window.Capacitor.Plugins[key].initialize(coreDefaults)
+                        .then((pluginApi) => {
+                        api = Object.assign(Object.assign({}, api), pluginApi);
+                    });
                 }
             }
-            return new Promise((resolve, reject) => getDefaults.then(() => {
-                resolve(api);
-            }, reject));
+            return api;
         });
     }
 }
 registerPlugin(corePluginName, {
     android: () => new ScanditCaptureCorePluginImplementation(),
     ios: () => new ScanditCaptureCorePluginImplementation(),
+    web: () => new ScanditCaptureCorePluginImplementation(),
 });
 // tslint:disable-next-line:variable-name
 export const ScanditCaptureCorePlugin = new ScanditCaptureCorePluginImplementation();

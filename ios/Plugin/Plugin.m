@@ -1,3 +1,9 @@
+/*
+ * This file is part of the Scandit Data Capture SDK
+ *
+ * Copyright (C) 2023- Scandit AG. All rights reserved.
+ */
+
 #import <Foundation/Foundation.h>
 #import <Capacitor/Capacitor.h>
 
@@ -20,4 +26,6 @@ CAP_PLUGIN(ScanditCaptureCore, "ScanditCaptureCoreNative",
            CAP_PLUGIN_METHOD(getCurrentCameraState, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(getIsTorchAvailable, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(getDefaults, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(getLastFrame, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(getLastFrameOrNull, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(emitFeedback, CAPPluginReturnPromise);)

@@ -30,6 +30,8 @@ import com.scandit.datacapture.core.common.feedback.Feedback
 import com.scandit.datacapture.core.common.geometry.QuadrilateralDeserializer
 import com.scandit.datacapture.core.common.geometry.toJson
 import com.scandit.datacapture.core.component.serialization.DataCaptureComponentDeserializer
+import com.scandit.datacapture.core.data.FrameData
+import com.scandit.datacapture.core.data.toJson
 import com.scandit.datacapture.core.json.JsonValue
 import com.scandit.datacapture.core.source.*
 import com.scandit.datacapture.core.source.serialization.FrameSourceDeserializer
@@ -39,7 +41,9 @@ import com.scandit.datacapture.core.ui.DataCaptureViewListener
 import com.scandit.datacapture.core.ui.style.Brush
 import com.scandit.datacapture.core.ui.viewfinder.AimerViewfinder
 import com.scandit.datacapture.core.ui.viewfinder.LaserlineViewfinder
+import com.scandit.datacapture.core.ui.viewfinder.LaserlineViewfinderStyle
 import com.scandit.datacapture.core.ui.viewfinder.RectangularViewfinder
+import com.scandit.datacapture.core.ui.viewfinder.RectangularViewfinderStyle
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -62,6 +66,7 @@ class ScanditCaptureCoreNative :
         private const val ACTION_STATUS_CHANGED = "didChangeStatus"
         private const val ACTION_CONTEXT_OBSERVATION_STARTED = "didStartObservingContext"
         private const val ACTION_VIEW_SIZE_CHANGED = "didChangeSizeOrientation"
+        private const val EMPTY_STRING_ERROR = "Empty strings are not allowed."
 
         private val SCANDIT_PLUGINS = listOf(
             "ScanditBarcodeNative",
@@ -69,6 +74,8 @@ class ScanditCaptureCoreNative :
             "ScanditIdNative",
             "ScanditTextNative"
         )
+
+        var lastFrame: FrameData? = null
     }
 
     private val uiWorker = UiWorker()
@@ -297,7 +304,7 @@ class ScanditCaptureCoreNative :
     private fun initializeContextFromJson(call: PluginCall) {
         try {
             val jsonString = call.data.getString("context")
-                ?: return call.reject("Empty strings are not allowed.")
+                ?: return call.reject(EMPTY_STRING_ERROR)
             val deserializationResult = deserializers.dataCaptureContextDeserializer
                 .contextFromJson(jsonString)
             val view = deserializationResult.view
@@ -345,7 +352,7 @@ class ScanditCaptureCoreNative :
                 call.resolve()
             } else {
                 val jsonString = call.data.getString("context")
-                    ?: return call.reject("Empty strings are not allowed.")
+                    ?: return call.reject(EMPTY_STRING_ERROR)
                 uiWorker.post {
                     val deserializationResult =
                         deserializers.dataCaptureContextDeserializer.updateContextFromJson(
@@ -381,7 +388,7 @@ class ScanditCaptureCoreNative :
     override fun setViewPositionAndSize(call: PluginCall) {
         try {
             val positionJson = call.data.getString("position")
-                ?: return call.reject("Empty strings are not allowed.")
+                ?: return call.reject(EMPTY_STRING_ERROR)
             val info = JSONObject(positionJson)
             captureViewHandler.setResizeAndMoveInfo(ResizeAndMoveInfo(info))
             call.resolve()
@@ -409,7 +416,7 @@ class ScanditCaptureCoreNative :
                 call.reject(NoViewToConvertPointError().serializeContent().toString())
             } else {
                 val pointJson = call.data.getString("point")
-                    ?: return call.reject("Empty strings are not allowed.")
+                    ?: return call.reject(EMPTY_STRING_ERROR)
                 val point = SerializablePoint(
                     JSONObject(pointJson)
                 ).toScanditPoint()
@@ -430,7 +437,7 @@ class ScanditCaptureCoreNative :
                 call.reject(NoViewToConvertQuadrilateralError().serializeContent().toString())
             } else {
                 val pointJson = call.data.getString("point")
-                    ?: return call.reject("Empty strings are not allowed.")
+                    ?: return call.reject(EMPTY_STRING_ERROR)
                 val quadrilateral = QuadrilateralDeserializer.fromJson(pointJson)
                 val mappedQuadrilateral = captureViewHandler.dataCaptureView!!
                     .mapFrameQuadrilateralToView(quadrilateral)
@@ -468,8 +475,8 @@ class ScanditCaptureCoreNative :
         try {
             val cameraSettings = CameraSettings()
             val dataCaptureView = DataCaptureView.newInstance(context, null)
-            val laserViewfinder = LaserlineViewfinder()
-            val rectangularViewfinder = RectangularViewfinder()
+            val laserViewfinder = LaserlineViewfinder(LaserlineViewfinderStyle.LEGACY)
+            val rectangularViewfinder = RectangularViewfinder(RectangularViewfinderStyle.LEGACY)
             val aimerViewfinder = AimerViewfinder()
             val brush = Brush.transparent()
             val availableCameraPositions = listOfNotNull(
@@ -523,6 +530,23 @@ class ScanditCaptureCoreNative :
     @PluginMethod
     override fun subscribeViewListener(call: PluginCall) {
         call.resolve()
+    }
+
+    @PluginMethod
+    fun getLastFrame(call: PluginCall) {
+        val lastFrame = ScanditCaptureCoreNative.lastFrame
+
+        if (lastFrame == null) {
+            call.reject(NullFrameError().serializeContent().toString())
+            return
+        }
+
+        call.resolve(JSObject(ScanditCaptureCoreNative.lastFrame?.toJson()))
+    }
+
+    @PluginMethod
+    fun getLastFrameOrNull(call: PluginCall) {
+        call.resolve(JSObject(ScanditCaptureCoreNative.lastFrame?.toJson()))
     }
 
     //endregion

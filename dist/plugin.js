@@ -35,7 +35,7 @@ var capacitorPlugin = (function (exports, core) {
                     // tslint:disable-next-line:no-console
                     console.log(`[SCANDIT WARNING] Took ${callbackDuration}ms to execute callback that's blocking native execution. You should keep this duration short, for more information, take a look at the documentation.`);
                 }
-                core.Plugins[pluginName].finishCallback([{
+                window.Capacitor.Plugins[pluginName].finishCallback([{
                         finishCallbackID,
                         result: callbackResult,
                     }]);
@@ -50,14 +50,14 @@ var capacitorPlugin = (function (exports, core) {
                 errorCallback(error);
             }
         };
-        core.Plugins[pluginName][functionName](args).then(extendedSuccessCallback, extendedErrorCallback);
+        window.Capacitor.Plugins[pluginName][functionName](args).then(extendedSuccessCallback, extendedErrorCallback);
     };
     const doReturnWithFinish = (finishCallbackID, result) => {
-        if (core.Plugins.ScanditBarcodeNative) {
-            core.Plugins.ScanditBarcodeNative.finishCallback({ result: Object.assign({ finishCallbackID }, result) });
+        if (window.Capacitor.Plugins.ScanditBarcodeNative) {
+            window.Capacitor.Plugins.ScanditBarcodeNative.finishCallback({ result: Object.assign({ finishCallbackID }, result) });
         }
-        else if (core.Plugins.ScanditIdNative) {
-            core.Plugins.ScanditIdNative.finishCallback({ result: Object.assign({ finishCallbackID }, result) });
+        else if (window.Capacitor.Plugins.ScanditIdNative) {
+            window.Capacitor.Plugins.ScanditIdNative.finishCallback({ result: Object.assign({ finishCallbackID }, result) });
         }
         return result;
     };
@@ -750,6 +750,15 @@ var capacitorPlugin = (function (exports, core) {
         };
     };
 
+    var __awaiter$1 = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
+    };
     var CapacitorFunction;
     (function (CapacitorFunction) {
         CapacitorFunction["GetDefaults"] = "getDefaults";
@@ -766,6 +775,8 @@ var capacitorPlugin = (function (exports, core) {
         CapacitorFunction["SubscribeViewListener"] = "subscribeViewListener";
         CapacitorFunction["GetCurrentCameraState"] = "getCurrentCameraState";
         CapacitorFunction["GetIsTorchAvailable"] = "getIsTorchAvailable";
+        CapacitorFunction["GetLastFrame"] = "getLastFrame";
+        CapacitorFunction["GetLastFrameOrNull"] = "getLastFrameOrNull";
         CapacitorFunction["EmitFeedback"] = "emitFeedback";
         CapacitorFunction["SubscribeVolumeButtonObserver"] = "subscribeVolumeButtonObserver";
         CapacitorFunction["UnsubscribeVolumeButtonObserver"] = "unsubscribeVolumeButtonObserver";
@@ -777,11 +788,18 @@ var capacitorPlugin = (function (exports, core) {
         defaults: {},
         exec: (success, error, functionName, args) => capacitorExec(success, error, pluginName, functionName, args),
     };
-    const getDefaults = new Promise((resolve, reject) => core.Plugins[Capacitor.pluginName][CapacitorFunction.GetDefaults]().then((defaultsJSON) => {
-        const defaults = defaultsFromJSON(defaultsJSON);
-        Capacitor.defaults = defaults;
-        resolve(defaults);
-    }, reject));
+    const getDefaults = () => __awaiter$1(void 0, void 0, void 0, function* () {
+        yield window.Capacitor.Plugins[pluginName][CapacitorFunction.GetDefaults]()
+            .then((defaultsJSON) => {
+            const defaults = defaultsFromJSON(defaultsJSON);
+            Capacitor.defaults = defaults;
+        })
+            .catch((error) => {
+            // tslint:disable-next-line:no-console
+            console.warn(error);
+        });
+        return Capacitor.defaults;
+    });
 
     var __decorate$5 = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
         var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -1068,6 +1086,37 @@ var capacitorPlugin = (function (exports, core) {
             return this[name];
         }
     }
+    class ImageBuffer {
+        get width() {
+            return this._width;
+        }
+        get height() {
+            return this._height;
+        }
+        get data() {
+            return this._data;
+        }
+    }
+    class PrivateFrameData {
+        get imageBuffers() {
+            return this._imageBuffers;
+        }
+        get orientation() {
+            return this._orientation;
+        }
+        static fromJSON(json) {
+            const frameData = new PrivateFrameData();
+            frameData._imageBuffers = json.imageBuffers.map((imageBufferJSON) => {
+                const imageBuffer = new ImageBuffer();
+                imageBuffer._width = imageBufferJSON.width;
+                imageBuffer._height = imageBufferJSON.height;
+                imageBuffer._data = imageBufferJSON.data;
+                return imageBuffer;
+            });
+            frameData._orientation = json.orientation;
+            return frameData;
+        }
+    }
 
     class FeedbackProxy {
         static forFeedback(feedback) {
@@ -1076,7 +1125,7 @@ var capacitorPlugin = (function (exports, core) {
             return proxy;
         }
         emit() {
-            core.Plugins[Capacitor.pluginName][CapacitorFunction.EmitFeedback]({ feedback: this.feedback.toJSON() });
+            window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.EmitFeedback]({ feedback: this.feedback.toJSON() });
         }
     }
 
@@ -1178,11 +1227,33 @@ var capacitorPlugin = (function (exports, core) {
             proxy.camera = camera;
             return proxy;
         }
+        static getLastFrame() {
+            return new Promise(resolve => window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.GetLastFrame]().then((frameDataJSONString) => {
+                let parsedData;
+                if (frameDataJSONString.data) {
+                    parsedData = JSON.parse(frameDataJSONString.data);
+                }
+                else {
+                    parsedData = frameDataJSONString;
+                }
+                resolve(PrivateFrameData.fromJSON(parsedData));
+            }));
+        }
+        static getLastFrameOrNull() {
+            return new Promise(resolve => window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.GetLastFrameOrNull]()
+                .then((frameDataJSONString) => {
+                if (!frameDataJSONString) {
+                    return resolve(null);
+                }
+                resolve(PrivateFrameData.fromJSON(JSON.parse(frameDataJSONString)));
+            }));
+        }
         getCurrentState() {
-            return new Promise((resolve, reject) => core.Plugins[Capacitor.pluginName][CapacitorFunction.GetCurrentCameraState]().then(resolve, reject));
+            return new Promise((resolve, reject) => window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.GetCurrentCameraState]()
+                .then(resolve, reject));
         }
         getIsTorchAvailable() {
-            return new Promise((resolve, reject) => core.Plugins[Capacitor.pluginName][CapacitorFunction.GetIsTorchAvailable]({
+            return new Promise((resolve, reject) => window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.GetIsTorchAvailable]({
                 position: this.camera.position,
             }).then(resolve, reject));
         }
@@ -1343,12 +1414,12 @@ var capacitorPlugin = (function (exports, core) {
             return contextProxy;
         }
         updateContextFromJSON() {
-            return new Promise((resolve, reject) => core.Plugins[Capacitor.pluginName][CapacitorFunction.UpdateContextFromJSON]({
+            return new Promise((resolve, reject) => window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.UpdateContextFromJSON]({
                 context: JSON.stringify(this.context.toJSON()),
             }).then(resolve.bind(this), reject.bind(this)));
         }
         dispose() {
-            core.Plugins[Capacitor.pluginName][CapacitorFunction.DisposeContext]();
+            window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.DisposeContext]();
         }
         initialize() {
             this.subscribeListener();
@@ -1357,20 +1428,20 @@ var capacitorPlugin = (function (exports, core) {
             this.initializeContextFromJSON();
         }
         initializeContextFromJSON() {
-            return new Promise((resolve, reject) => core.Plugins[Capacitor.pluginName][CapacitorFunction.ContextFromJSON]({
+            return new Promise((resolve, reject) => window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.ContextFromJSON]({
                 context: JSON.stringify(this.context.toJSON()),
             }).then(resolve.bind(this), reject.bind(this)));
         }
         subscribeListener() {
-            core.Plugins[Capacitor.pluginName][CapacitorFunction.SubscribeContextListener]();
-            core.Plugins[Capacitor.pluginName]
+            window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.SubscribeContextListener]();
+            window.Capacitor.Plugins[Capacitor.pluginName]
                 .addListener(DataCaptureContextListenerEvent.DidChangeContextStatus, this.notifyListeners.bind(this));
-            core.Plugins[Capacitor.pluginName]
+            window.Capacitor.Plugins[Capacitor.pluginName]
                 .addListener(DataCaptureContextListenerEvent.DidStartObservingContext, this.notifyListeners.bind(this));
         }
         // TODO: adjust when readding framedata to the api https://jira.scandit.com/browse/SDC-1159
         // private subscribeFrameListener() {
-        //     Plugins[Capacitor.pluginName][CapacitorFunction.SubscribeContextFrameListener]()
+        //     window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.SubscribeContextFrameListener]()
         //     .then(this.notifyFrameListeners.bind(this), null)
         // }
         notifyListeners(event) {
@@ -1562,30 +1633,30 @@ var capacitorPlugin = (function (exports, core) {
             return viewProxy;
         }
         setPositionAndSize(top, left, width, height, shouldBeUnderWebView) {
-            return new Promise((resolve, reject) => core.Plugins[Capacitor.pluginName][CapacitorFunction.SetViewPositionAndSize]({
+            return new Promise((resolve, reject) => window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.SetViewPositionAndSize]({
                 position: { top, left, width, height, shouldBeUnderWebView },
             }).then(resolve.bind(this), reject.bind(this)));
         }
         show() {
-            return core.Plugins[Capacitor.pluginName][CapacitorFunction.ShowView]();
+            return window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.ShowView]();
         }
         hide() {
-            return core.Plugins[Capacitor.pluginName][CapacitorFunction.HideView]();
+            return window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.HideView]();
         }
         viewPointForFramePoint(point) {
-            return new Promise((resolve, reject) => core.Plugins[Capacitor.pluginName][CapacitorFunction.ViewPointForFramePoint]({
+            return new Promise((resolve, reject) => window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.ViewPointForFramePoint]({
                 point: point.toJSON(),
             }).then((convertedPoint) => resolve(Point.fromJSON(convertedPoint)), reject.bind(this)));
         }
         viewQuadrilateralForFrameQuadrilateral(quadrilateral) {
-            return new Promise((resolve, reject) => core.Plugins[Capacitor.pluginName][CapacitorFunction.ViewQuadrilateralForFrameQuadrilateral]({
+            return new Promise((resolve, reject) => window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.ViewQuadrilateralForFrameQuadrilateral]({
                 point: quadrilateral.toJSON(),
             }).then((convertedQuadrilateral) => resolve(Quadrilateral
                 .fromJSON(convertedQuadrilateral)), reject.bind(this)));
         }
         subscribeListener() {
-            core.Plugins[Capacitor.pluginName][CapacitorFunction.SubscribeViewListener]();
-            core.Plugins[Capacitor.pluginName]
+            window.Capacitor.Plugins[Capacitor.pluginName][CapacitorFunction.SubscribeViewListener]();
+            window.Capacitor.Plugins[Capacitor.pluginName]
                 .addListener(DataCaptureViewListenerEvent.DidChangeSizeOrientation, this.notifyListeners.bind(this));
         }
         notifyListeners(event) {
@@ -1963,7 +2034,7 @@ var capacitorPlugin = (function (exports, core) {
 
     class DataCaptureVersion {
         static get pluginVersion() {
-            return '6.16.2';
+            return '6.17.0';
         }
     }
 
@@ -1982,7 +2053,7 @@ var capacitorPlugin = (function (exports, core) {
             this.unsubscribe();
         }
         subscribe() {
-            this.subscriber = core.Plugins[Capacitor.pluginName]
+            this.subscriber = window.Capacitor.Plugins[Capacitor.pluginName]
                 .addListener(VolumeButtonObserverEvent.DidChangeVolume, this.notifyListeners.bind(this));
         }
         unsubscribe() {
@@ -2034,6 +2105,7 @@ var capacitorPlugin = (function (exports, core) {
     class ScanditCaptureCorePluginImplementation {
         initializePlugins() {
             return __awaiter(this, void 0, void 0, function* () {
+                const coreDefaults = yield getDefaults();
                 let api = {
                     Feedback,
                     Camera,
@@ -2088,19 +2160,20 @@ var capacitorPlugin = (function (exports, core) {
                 };
                 for (const key of Object.keys(window.Capacitor.Plugins)) {
                     if (key.startsWith('Scandit') && key.indexOf('Native') < 0 && key !== corePluginName) {
-                        const pluginApi = yield window.Capacitor.Plugins[key].initialize();
-                        api = Object.assign(Object.assign({}, api), pluginApi);
+                        yield window.Capacitor.Plugins[key].initialize(coreDefaults)
+                            .then((pluginApi) => {
+                            api = Object.assign(Object.assign({}, api), pluginApi);
+                        });
                     }
                 }
-                return new Promise((resolve, reject) => getDefaults.then(() => {
-                    resolve(api);
-                }, reject));
+                return api;
             });
         }
     }
     core.registerPlugin(corePluginName, {
         android: () => new ScanditCaptureCorePluginImplementation(),
         ios: () => new ScanditCaptureCorePluginImplementation(),
+        web: () => new ScanditCaptureCorePluginImplementation(),
     });
     // tslint:disable-next-line:variable-name
     const ScanditCaptureCorePlugin = new ScanditCaptureCorePluginImplementation();

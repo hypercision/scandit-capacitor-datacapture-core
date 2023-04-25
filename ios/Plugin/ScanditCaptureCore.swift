@@ -1,3 +1,9 @@
+/*
+ * This file is part of the Scandit Data Capture SDK
+ *
+ * Copyright (C) 2023- Scandit AG. All rights reserved.
+ */
+
 import WebKit
 import Foundation
 import Capacitor
@@ -40,6 +46,8 @@ public class ScanditCaptureCore: CAPPlugin {
             captureViewConstraints.captureView = captureView
         }
     }
+
+    public static var lastFrame: FrameData?
 
     private var volumeButtonObserver: VolumeButtonObserver?
 
@@ -363,5 +371,23 @@ public class ScanditCaptureCore: CAPPlugin {
         }
 
         feedback.emit()
+    }
+
+    @objc(getLastFrame:)
+    func getLastFrame(_ call: CAPPluginCall) {
+        guard let lastFrame = ScanditCaptureCore.lastFrame else {
+            call.reject(CommandError.noFrameData.toJSONString())
+            return
+        }
+        call.resolve([
+            "data": lastFrame.jsonString
+        ])
+    }
+
+    @objc(getLastFrameOrNull:)
+    func getLastFrameOrNull(_ call: CAPPluginCall) {
+        call.resolve([
+            "data": ScanditCaptureCore.lastFrame,
+        ])
     }
 }

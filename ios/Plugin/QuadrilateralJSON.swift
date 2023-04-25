@@ -1,3 +1,9 @@
+/*
+ * This file is part of the Scandit Data Capture SDK
+ *
+ * Copyright (C) 2023- Scandit AG. All rights reserved.
+ */
+
 import ScanditCaptureCore
 
 // TODO: use SDK serializer/deserializer: https://jira.scandit.com/browse/SDK-11699

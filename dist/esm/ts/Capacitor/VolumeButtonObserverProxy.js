@@ -1,4 +1,3 @@
-import { Plugins } from '@capacitor/core';
 import { Capacitor } from './Capacitor';
 import { doReturnWithFinish } from './CommonCapacitor';
 var VolumeButtonObserverEvent;
@@ -16,7 +15,7 @@ export class VolumeButtonObserverProxy {
         this.unsubscribe();
     }
     subscribe() {
-        this.subscriber = Plugins[Capacitor.pluginName]
+        this.subscriber = window.Capacitor.Plugins[Capacitor.pluginName]
             .addListener(VolumeButtonObserverEvent.DidChangeVolume, this.notifyListeners.bind(this));
     }
     unsubscribe() {

@@ -1,21 +1,8 @@
-// extension CDVInvokedUrlCommand {
-//    var defaultArgument: Any? {
-//        return argument(at: 0)
-//    }
-//
-//    var defaultArgumentAsString: String? {
-//        if let defaultArgument = defaultArgument as? String {
-//            return defaultArgument
-//        }
-//
-//        guard let defaultArgument = defaultArgument,
-//            let data = try? JSONSerialization.data(withJSONObject: defaultArgument) else {
-//            return nil
-//        }
-//
-//        return String(data: data, encoding: .utf8)
-//    }
-// }
+/*
+ * This file is part of the Scandit Data Capture SDK
+ *
+ * Copyright (C) 2023- Scandit AG. All rights reserved.
+ */
 
 public protocol CommandJSONArgument: Decodable {
     static func fromJSONObject(_ jsonObject: Any) throws -> Self
