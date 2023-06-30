@@ -6,6 +6,7 @@
 
 package com.scandit.capacitor.datacapture.core.handlers
 
+import com.scandit.capacitor.datacapture.core.deserializers.DeserializationLifecycleObserver
 import com.scandit.capacitor.datacapture.core.testing.OpenForTesting
 import com.scandit.datacapture.core.capture.DataCaptureContext
 import com.scandit.datacapture.core.capture.DataCaptureContextListener
@@ -28,6 +29,9 @@ class DataCaptureContextHandler(
             disposeCurrent()
             dataCaptureContext.addListener(contextListener)
             this.dataCaptureContext = dataCaptureContext
+            DeserializationLifecycleObserver.dispatchDataCaptureContextDeserialized(
+                dataCaptureContext
+            )
         }
     }
 

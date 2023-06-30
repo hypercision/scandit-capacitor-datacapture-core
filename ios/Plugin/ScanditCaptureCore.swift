@@ -16,13 +16,28 @@ public protocol DataCapturePlugin where Self: CAPPlugin {
     var components: [DataCaptureComponent] { get }
 }
 
+public protocol ContextChangeListener: AnyObject {
+    func context(didChange context: DataCaptureContext?)
+}
+
 @objc(ScanditCaptureCore)
 // swiftlint:disable:next type_body_length
 public class ScanditCaptureCore: CAPPlugin {
 
     public static var dataCapturePlugins = [DataCapturePlugin]()
 
-    public var context: DataCaptureContext?
+    public var context: DataCaptureContext? {
+        didSet {
+            Self.context = context
+            os_unfair_lock_lock(&Self.contextListenersLock)
+            defer { os_unfair_lock_unlock(&Self.contextListenersLock) }
+            Self.contextListeners.compactMap { $0 as? ContextChangeListener }.forEach {
+                $0.context(didChange: context)
+            }
+        }
+    }
+
+    private static var context: DataCaptureContext?
 
     var captureView: DataCaptureView? {
         didSet {
@@ -44,6 +59,23 @@ public class ScanditCaptureCore: CAPPlugin {
 
             webView?.addSubview(captureView)
             captureViewConstraints.captureView = captureView
+        }
+    }
+
+    private static var contextListenersLock = os_unfair_lock()
+    private static var contextListeners = NSMutableSet()
+
+    public static func registerContextChangeListener(listener: ContextChangeListener) {
+        if Self.contextListeners.contains(listener) {
+            return
+        }
+        Self.contextListeners.add(listener)
+        listener.context(didChange: context)
+    }
+
+    public static func unregisterContextChangeListener(listener: ContextChangeListener) {
+        if Self.contextListeners.contains(listener) {
+            Self.contextListeners.remove(listener)
         }
     }
 
@@ -148,6 +180,11 @@ public class ScanditCaptureCore: CAPPlugin {
                                              components: self.components,
                                              fromJSON: jsonString)
             } catch let error {
+                if (error.localizedDescription.contains("The mode cannot be updated: already initialized but")) {
+                    self.contextFromJSON(call)
+                    return
+                }
+                
                 call.reject(error.localizedDescription)
                 return
             }

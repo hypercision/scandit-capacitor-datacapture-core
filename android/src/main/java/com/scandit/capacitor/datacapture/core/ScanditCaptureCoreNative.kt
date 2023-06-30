@@ -13,6 +13,7 @@ import com.scandit.capacitor.datacapture.core.data.ResizeAndMoveInfo
 import com.scandit.capacitor.datacapture.core.data.SerializablePoint
 import com.scandit.capacitor.datacapture.core.data.SerializableViewState
 import com.scandit.capacitor.datacapture.core.data.defaults.*
+import com.scandit.capacitor.datacapture.core.deserializers.DeserializationLifecycleObserver
 import com.scandit.capacitor.datacapture.core.deserializers.Deserializers
 import com.scandit.capacitor.datacapture.core.deserializers.DeserializersProvider
 import com.scandit.capacitor.datacapture.core.errors.*
@@ -158,7 +159,7 @@ class ScanditCaptureCoreNative :
         if (getPermissionState("camera") != PermissionState.GRANTED) {
             requestPermissionForAlias("camera", call, "initialCameraPermsCallback")
         } else {
-            initializeContextFromJson(call)
+            updateContext(call)
         }
     }
 
@@ -176,7 +177,7 @@ class ScanditCaptureCoreNative :
         if (getPermissionState("camera") == PermissionState.GRANTED) {
             notifyCameraPermissionGrantedToPlugins()
         }
-        initializeContextFromJson(call)
+        updateContext(call)
     }
 
     @Suppress("unused")
@@ -298,6 +299,7 @@ class ScanditCaptureCoreNative :
     //region DataCaptureContextProxy
     @PluginMethod
     override fun contextFromJSON(call: PluginCall) {
+        initializeContextFromJson(call)
         checkOrRequestInitialCameraPermission(call)
     }
 
@@ -312,7 +314,9 @@ class ScanditCaptureCoreNative :
             val dataCaptureComponents = deserializationResult.components
 
             captureContextHandler.attachDataCaptureContext(dataCaptureContext)
-            captureViewHandler.attachDataCaptureView(view!!, bridge.activity)
+            if (view != null) {
+                captureViewHandler.attachDataCaptureView(view, bridge.activity)
+            }
             captureComponentsHandler.attachDataCaptureComponents(dataCaptureComponents)
             call.resolve()
         } catch (e: JSONException) {
@@ -329,7 +333,10 @@ class ScanditCaptureCoreNative :
         captureContextHandler.disposeCurrent()
         captureComponentsHandler.disposeCurrent()
         captureViewHandler.disposeCurrent()
-        call.resolve()
+        removeAllListeners(call)
+        plugins.forEach {
+          it.removeAllListeners(call)
+        }
     }
 
     @PluginMethod
@@ -338,39 +345,33 @@ class ScanditCaptureCoreNative :
     }
 
     private fun updateContext(call: PluginCall) {
+        val dcContext = captureContextHandler.dataCaptureContext ?: return
+
         try {
-            if (captureContextHandler.dataCaptureContext == null) {
-                captureContextHandler.attachDataCaptureContext(
-                    captureContextHandler.dataCaptureContext!!
-                )
-                captureViewHandler.attachDataCaptureView(
-                    captureViewHandler.dataCaptureView!!, bridge.activity
-                )
-                captureComponentsHandler.attachDataCaptureComponents(
-                    captureComponentsHandler.dataCaptureComponents
-                )
-                call.resolve()
-            } else {
-                val jsonString = call.data.getString("context")
-                    ?: return call.reject(EMPTY_STRING_ERROR)
-                uiWorker.post {
-                    val deserializationResult =
-                        deserializers.dataCaptureContextDeserializer.updateContextFromJson(
-                            captureContextHandler.dataCaptureContext!!,
-                            captureViewHandler.dataCaptureView,
-                            captureComponentsHandler.dataCaptureComponents,
-                            jsonString
-                        )
-                    val view = deserializationResult.view
-                    val dataCaptureContext = deserializationResult.dataCaptureContext
-                    val dataCaptureComponents = deserializationResult.components
+            val jsonString = call.data.getString("context")
+                ?: return call.reject(EMPTY_STRING_ERROR)
 
-                    captureContextHandler.attachDataCaptureContext(dataCaptureContext)
-                    captureViewHandler.attachDataCaptureView(view!!, bridge.activity)
-                    captureComponentsHandler.attachDataCaptureComponents(dataCaptureComponents)
+            DeserializationLifecycleObserver.dispatchParsersRemoved()
 
-                    call.resolve()
+            uiWorker.post {
+                val deserializationResult =
+                    deserializers.dataCaptureContextDeserializer.updateContextFromJson(
+                        dcContext,
+                        captureViewHandler.dataCaptureView,
+                        captureComponentsHandler.dataCaptureComponents,
+                        jsonString
+                    )
+                val view = deserializationResult.view
+                val dataCaptureContext = deserializationResult.dataCaptureContext
+                val dataCaptureComponents = deserializationResult.components
+
+                captureContextHandler.attachDataCaptureContext(dataCaptureContext)
+                if (view != null) {
+                    captureViewHandler.attachDataCaptureView(view, bridge.activity)
                 }
+                captureComponentsHandler.attachDataCaptureComponents(dataCaptureComponents)
+
+                call.resolve()
             }
         } catch (e: JSONException) {
             call.reject(JsonParseError(e.message).toString())

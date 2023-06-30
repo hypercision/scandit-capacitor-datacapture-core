@@ -40,12 +40,31 @@ public struct ListenerEvent {
         case didUpdateSelectionInBarcodeSelection = "didUpdateSelectionInBarcodeSelection"
         case didUpdateSessionInBarcodeSelection = "didUpdateSessionInBarcodeSelection"
 
+        // Barcode Count listener
+        case didScanInBarcodeCount = "barcodeCountListener-scan"
+
+        // Barcode Count View listener
+        case barcodeCountViewBrushForRecognizedBarcode = "barcodeCountViewListener-brushForRecognizedBarcode"
+        case barcodeCountViewBrushForUnrecognizedBarcode = "barcodeCountViewListener-brushForUnrecognizedBarcode"
+        case barcodeCountViewBrushForRecognizedBarcodeNotInList = "barcodeCountViewListener-brushForRecognizedBarcodeNotInList"
+        case barcodeCountViewDidTapRecognizedBarcode = "barcodeCountViewListener-onRecognizedBarcodeTapped"
+        case barcodeCountViewDidTapUnrecognizedBarcode = "barcodeCountViewListener-onUnrecognizedBarcodeTapped"
+        case barcodeCountViewDidTapRecognizedBarcodeNotInList = "barcodeCountViewListener-onRecognizedBarcodeNotInListTapped"
+        case barcodeCountViewDidTapFilteredBarcode = "barcodeCountViewListener-onFilteredBarcodeTapped"
+
+        // Barcode Count View UI Listener
+        case barcodeCountViewListButtonTapped = "barcodeCountViewUiListener-onListButtonTapped"
+        case barcodeCountViewExitButtonTapped = "barcodeCountViewUiListener-onExitButtonTapped"
+        case barcodeCountViewSingleScanButtonTapped = "barcodeCountViewUiListener-onSingleScanButtonTapped"
+
+        case captureListCompleted = "barcodeCountViewListener-onCaptureListCompleted"
+        case captureListUpdated = "barcodeCountCaptureListListener-onCaptureListSessionUpdated"
+
         // Text Capture Listener
         case didCaptureInTextCapture = "didCaptureInTextCapture"
 
         // ID Capture Listener
         case didCaptureInIdCapture = "didCaptureInIdCapture"
-        case didFailInIdCapture = "didFailInIdCapture"
         case didLocalizeInIdCapture = "didLocalizeInIdCapture"
         case didRejectInIdCapture = "didRejectInIdCapture"
 
@@ -106,6 +125,12 @@ public struct CommandError {
         case noBarcodeTrackingSession = 10076
 
         case noFrameData = 10077
+
+        case noBarcodeCount = 10078
+        case noContext = 10079
+        case barcodeCountDeserializationError = 10080
+        case barcodeCountViewDeserializationError = 10081
+        case noBarcodeCountView = 10082
     }
 
     public static let invalidJSON = CommandError(code: .invalidJSON,
@@ -166,6 +191,33 @@ public struct CommandError {
                                                message: """
                                                 There was no BarcodeSelection mode to execute the command on
                                                 """)
+
+    public static let noBarcodeCount = CommandError(code: .noBarcodeCount,
+                                                    message: """
+                                                        There was no BarcodeCount mode to execute the command on
+                                                        """)
+
+    public static let noContext = CommandError(code: .noContext,
+                                               message: """
+                                               There is no active data capture context
+                                               """)
+
+    public static func barcodeCountDeserializationError(message: String) -> CommandError {
+        CommandError(code: .barcodeCountDeserializationError,
+                     message: """
+                     An error occurred during the deserialization of the barcode count mode:\n \(message)
+                     """)
+    }
+
+    public static func barcodeCountViewDeserializationError(message: String) -> CommandError {
+        CommandError(code: .barcodeCountViewDeserializationError,
+                     message: """
+                     An error occurred during the deserialization of the barcode count view:\n \(message)
+                     """)
+    }
+
+    public static let noBarcodeCountView = CommandError(code: .noBarcodeCountView,
+                                                        message: "The barcode count view has not been initialized yet")
 
     public static let noBarcodeCaptureSession = CommandError(code: .noBarcodeCaptureSession,
                                                message: """

@@ -1,4 +1,4 @@
-export declare type Optional<T> = T | null;
+export type Optional<T> = T | null;
 export interface ScanditCaptureCorePluginInterface {
     initializePlugins(): Promise<any>;
 }
@@ -197,7 +197,7 @@ export const pluginName = "ScanditCaptureCoreNative";
 export const Capacitor: {
     pluginName: string;
     defaults: Defaults;
-    exec: (success: Function | null, error: Function | null, functionName: string, args: Optional<[any]>) => void;
+    exec: (success: Optional<Function>, error: Optional<Function>, functionName: string, args: Optional<[any]>) => void;
 };
 export const getDefaults: () => Promise<Defaults>;
 
@@ -210,7 +210,7 @@ export class CapacitorError {
 export interface BlockingModeListenerResult {
     enabled: boolean;
 }
-export const capacitorExec: (successCallback: Function | null, errorCallback: Function | null, pluginName: string, functionName: string, args: Optional<[any]>) => void;
+export const capacitorExec: (successCallback: Optional<Function>, errorCallback: Optional<Function>, pluginName: string, functionName: string, args: Optional<[any]>) => void;
 export const doReturnWithFinish: (finishCallbackID: string, result: any) => any;
 
  
@@ -587,7 +587,8 @@ export class MarginsWithUnit {
     private static fromJSON;
     private static get zero();
     constructor(left: NumberWithUnit, right: NumberWithUnit, top: NumberWithUnit, bottom: NumberWithUnit);
-} type ColorJSON = string;
+}
+type ColorJSON = string;
 interface PrivateColor {
     fromJSON(json: ColorJSON): Color;
 }

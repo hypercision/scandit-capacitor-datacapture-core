@@ -10,6 +10,7 @@ import android.app.Activity
 import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
 import com.scandit.capacitor.datacapture.core.data.ResizeAndMoveInfo
 import com.scandit.capacitor.datacapture.core.testing.OpenForTesting
 import com.scandit.capacitor.datacapture.core.utils.pxFromDp
@@ -34,14 +35,14 @@ class DataCaptureViewHandler(
     private val webView: View?
         get() = webViewReference?.get()
 
-    fun attachDataCaptureView(dataCaptureView: DataCaptureView, activity: Activity) {
+    fun attachDataCaptureView(dataCaptureView: DataCaptureView, activity: AppCompatActivity) {
         if (this.dataCaptureView != dataCaptureView) {
             disposeCurrentDataCaptureView()
             addDataCaptureView(dataCaptureView, activity)
         }
     }
 
-    fun attachWebView(webView: View, @Suppress("UNUSED_PARAMETER") activity: Activity) {
+    fun attachWebView(webView: View, @Suppress("UNUSED_PARAMETER") activity: AppCompatActivity) {
         if (this.webView != webView) {
             webViewReference = WeakReference(webView)
             uiWorker.post {
@@ -128,10 +129,10 @@ class DataCaptureViewHandler(
             }
             if (latestInfo.shouldBeUnderWebView) {
                 webView?.bringToFront()
-                (webView?.parent as View).translationZ = 1F
+                (webView?.parent as? View)?.translationZ = 1F
             } else {
                 dataCaptureView.bringToFront()
-                (webView?.parent as View).translationZ = -1F
+                (webView?.parent as? View)?.translationZ = -1F
             }
             dataCaptureView.requestLayout()
         }
